@@ -1,0 +1,20 @@
+{
+  "manifest": {
+    "publishingInformation": {
+      "locales": {
+        "en-US": {
+          "name": "RollCall"
+        }
+      }
+    },
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "sourceDir": "./lambda/us-east-1_RollCall"
+        },
+        "interfaces": []
+      }
+    },
+    "manifestVersion": "1.0"
+  }
+}
