@@ -356,8 +356,8 @@ const handlers = {
         initializesessionID(this.attributes);
         let ids = [];
         getWorkbook(key).then(workbook => {
-           ids = workbook["sheets"];
-           console.log("allQuestions at 345: " + this.attributes.allQuestions);
+            ids = workbook["sheets"];
+            console.log("allQuestions at 345: " + this.attributes.allQuestions);
             let slotObj = this.event.request.intent.slots;
             let currentDialogState = this.event.request.dialogState;
             console.log("**** Dialog State: " + currentDialogState);
