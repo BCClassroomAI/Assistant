@@ -336,7 +336,6 @@ const handlers = {
     },
 
     'QuizQuestion': function () {
-
         function hasID(courseNumber, ids) {
             for (let i=0; i<ids.length; i++) {
                 if (ids[i]["name"] == courseNumber) {
@@ -345,7 +344,6 @@ const handlers = {
             }
             return false;
         }
-
         function getID(courseNumber, ids) {
             for (let i=0; i<ids.length; i++) {
                 if (ids[i]["name"] == courseNumber) {
@@ -354,69 +352,54 @@ const handlers = {
             }
             return null;
         }
-
         console.log("**** Quiz Question Intent Started");
-
         initializesessionID(this.attributes);
         let ids = [];
         getWorkbook(key).then(workbook => {
            ids = workbook["sheets"];
-
            console.log("allQuestions at 345: " + this.attributes.allQuestions);
-
             let slotObj = this.event.request.intent.slots;
-
             let currentDialogState = this.event.request.dialogState;
             console.log("**** Dialog State: " + currentDialogState);
-
             if (idDoesMatch(this.attributes.oldID, this.attributes.sessionID)) {
-
                 if (currentDialogState !== 'COMPLETED') {
-
                     this.emit(':delegate');
-
                 } else if (!hasID(slotObj.questionSet.value, ids)) {
-
                     console.log("**** Getting a valid question set");
                     const slotToElicit = 'questionSet';
                     const speechOutput = 'Please provide a valid questionSet.';
                     this.emit(':elicitSlot', slotToElicit, speechOutput, speechOutput);
-
                 } else {
                     this.attributes.questionSet = slotObj.questionSet.value;
                     this.attributes.oldID = this.attributes.sessionID;
                     this.attributes.sessionID++;
-
-                    this.attributes.allQuestions = [];
-
+                    this.attributes.allQuestions = {questions: [], tag: ""};
                     getSheet(key, getID(this.attributes.questionSet, ids)).then(sheet => {
                         sheet.rows.forEach(row => {
-                            this.attributes.allQuestions.push({
+                            this.attributes.allQuestions.questions.push({
                                 tag: row[0],
                                 question: row[1],
                                 answer: row[2],
                                 beenCalled: 0
-                            })
+                            });
+                            if (row[4] !== "") {
+                                this.attributes.allQuestions.tag = row[4];
+                            }
                         });
-
-                        this.attributes.question = randomQuizQuestion(this.attributes.allQuestions);
+                        this.attributes.question = randomQuizQuestion(this.attributes.allQuestions.questions);
                         console.log("**** Question: " + this.attributes.question.question);
                         this.response.speak(this.attributes.question.question).listen(this.attributes.question.question);
                         this.attributes.question.beenCalled++;
                         this.emit(":responseReady");
                     });
                 }
-
             } else {
 
-                const tag = '';
-
-                if (tag === 'random' || tag === 'yes') { // Excel could ask "in random order?" and teachers just enter yes or no
-                    this.attributes.question = randomQuizQuestion(this.attributes.allQuestions);
+                if (this.attributes.allQuestions.tag === 'yes') {
+                    this.attributes.question = randomQuizQuestion(this.attributes.allQuestions.questions);
                 } else {
-                    this.attributes.question = orderedQuizQuestion(this.attributes.allQuestions);
+                    this.attributes.question = orderedQuizQuestion(this.attributes.allQuestions.questions);
                 }
-
                 console.log("**** Question: " + this.attributes.question.question);
                 this.response.speak(this.attributes.question.question);
                 this.attributes.question.beenCalled++;
