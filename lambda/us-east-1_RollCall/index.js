@@ -3,26 +3,57 @@
 'use strict';
 const Alexa = require("alexa-sdk");
 const AWS = require("aws-sdk");
-//const config = require("./user-config.json");
-//const s3 = new AWS.S3();
 const sheetsy = require("sheetsy");
 const { urlToKey, getWorkbook, getSheet } = sheetsy;
 
 const key = '12B19KY3fNkgR4M_D56XQHNqCazr_oPoASI--0scdnZQ';
 
-// function init() {
-//     Tabletop.init( { key: publicSpreadsheetUrl,
-//                      callback: showInfo,
-//                      simpleSheet: true } )
-// }
+console.log("Initialized obj");
 
-// function showInfo(data, tabletop) {
-//     console.log('Successfully processed!');
-//     console.log("DATA: " + data);
-//     //console.log("Element: " + data["1111"]["elements"][0]["Tag"]);
-//     //console.log("Passed Attributes: " + tabletop.passedAttributes);
-//     //console.log("***** TableTop Property: " + tabletop.wrf);
-// }
+let obj = {};
+
+async function loadSheets() {
+    console.log("Loading sheets");
+    getWorkbook(key).then(workbook => {
+        //console.log("Got the workbook");
+        let courses = workbook.sheets;
+        courses.forEach(course => {
+
+            //console.log("Getting a sheet for " + course.name);
+            obj[course.name] = {};
+            obj[course.name]["Questions"] = [];
+            obj[course.name]["Students"] = [];
+            //console.log("Initialized for " + course.name);
+
+            getSheet(key, course.id).then(sheet => {
+                //console.log("Got a sheet");
+                sheet.rows.forEach(row => {
+                    //console.log("Writing for a row");
+                    //console.log("Student: " + row[3]);
+
+                    if (row[0] !== "") {
+                        //console.log("Question added to " + course.name);
+                        //console.log("(42) Question: " + row[1]);
+                        obj[course.name].Questions.push({
+                            tag: row[0],
+                            question: row[1],
+                            answer: row[2],
+                            beenCalled: 0
+                        });
+                    }
+
+                    if (row[3] !== "") {
+                        obj[course.name].Students.push({
+                            name: row[3],
+                            beenCalled: 0
+                        });
+                    }
+
+                })
+            });
+        });
+    });
+}
 
 const initializeCourses = (attributes) => {
     console.log("We're in initializeCourses");
@@ -40,71 +71,32 @@ const initializeCourses = (attributes) => {
         }
 };
 
-// const initializeQuestions = (attributes) => {
-//     console.log('Initializing Questions');
-//
-//     let ids = [];
-//
-//     getWorkbook(key).then(workbook => {
-//         ids = workbook["sheets"];
-//     };
-//
-//     return ids;
-//
-//     // let tabletop = Tabletop.init({
-//     //     key: publicSpreadsheetUrl,
-//     //     callback: showInfo
-//     // });
-//
-//     //console.log("Tabletop Sheets: " + tabletop.sheets());
-//     //console.log("Sheet 1111: " + tabletop.sheets("1111"));
-//
-//     // if (!attributes.hasOwnProperty('allQuestions')) {
-//     //     console.log('making an allQuestions attribute');
-//     //     getQuestions(attributes);
-//     // }
-// };
-
 AWS.config.update({region: 'us-east-1'});
 
 exports.handler = function (event, context, callback) {
     const alexa = Alexa.handler(event, context, callback);
-    //const s3bkt = event.Records[0].s3.bucket.bcalexaquizquestions;
-    //const s3key = event.Records[0].s3.object.quizquestions/SampleQuizQuestions.txt;
-    // alexa.dynamoDBTableName = 'RollCallAttributes';
-    // alexa.appId = config.appID;
-    // const params = {
-    //     Bucket: 'bcalexaquizquestions',
-    //     Key: '1111.txt'
-    // };
     alexa.dynamoDBTableName = "RollCall";
     alexa.registerHandlers(handlers);
     alexa.execute();
-
 };
 
-// async function S3read(params, callback) {
-//
-//
-//     let p = s3.getObject(params).promise();
-//     let res = await p;
-//     console.log(res.toString());
-//
-//     const lines = res.Body.toString().split('\r\n');
-//     const response = [];
-//
-//     for (let i=0; i < lines.length; i++) {
-//             const qparts = lines[i].split(':');
-//             response.push({
-//                 tag: qparts[0],
-//                 question: qparts[1],
-//                 answer: qparts[2],
-//                 beenCalled: 0
-//             });
-//     }
-//
-//     callback(null,response);
-// }
+function hasID(courseNumber, ids) {
+    for (let i=0; i<ids.length; i++) {
+        if (ids[i]["name"] == courseNumber) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function getID(courseNumber, ids) {
+    for (let i=0; i<ids.length; i++) {
+        if (ids[i]["name"] == courseNumber) {
+            return ids[i]["id"];
+        }
+    }
+    return null;
+}
 
 function search(list, target) {
     if (list.length == 0) return false;
@@ -124,20 +116,6 @@ function getNames(students) {
     students.forEach(student => names.push(student.name));
     return names;
 }
-
-// function S3write(params, callback) {
-//     // call AWS S3
-//     const AWS = require('aws-sdk');
-//     const s3 = new AWS.S3();
-//
-//     s3.putObject(params, function(err, data) {
-//         if(err) { console.log(err, err.stack); }
-//         else {
-//             callback(data["ETag"]);
-//
-//         }
-//     });
-// }
 
 function randomQuizQuestion(questionList) {
     let randomIndex = Math.floor(Math.random() * questionList.length);
@@ -331,32 +309,11 @@ const handlers = {
 
     'QuizQuestion': function () {
 
-        function hasID(courseNumber, ids) {
-            for (let i=0; i<ids.length; i++) {
-                if (ids[i]["name"] == courseNumber) {
-                    return true;
-                }
-            }
-            return false;
-        }
+        loadSheets().then(() => {
+            this.attributes.obj = obj;
+            console.log("**** Quiz Question Intent Started");
 
-        function getID(courseNumber, ids) {
-            for (let i=0; i<ids.length; i++) {
-                if (ids[i]["name"] == courseNumber) {
-                    return ids[i]["id"];
-                }
-            }
-            return null;
-        }
-
-        console.log("**** Quiz Question Intent Started");
-
-        initializesessionID(this.attributes);
-        let ids = [];
-        getWorkbook(key).then(workbook => {
-           ids = workbook["sheets"];
-
-           console.log("allQuestions at 345: " + this.attributes.allQuestions);
+            initializesessionID(this.attributes);
 
             let slotObj = this.event.request.intent.slots;
 
@@ -364,52 +321,37 @@ const handlers = {
             console.log("**** Dialog State: " + currentDialogState);
 
             if (idDoesMatch(this.attributes.oldID, this.attributes.sessionID)) {
+                console.log("ID Matches");
 
                 if (currentDialogState !== 'COMPLETED') {
-
                     this.emit(':delegate');
-
-                } else if (!hasID(slotObj.questionSet.value, ids)) {
-
+                } else if (!this.attributes.obj.hasProperty(slotObj.questionSet.value)) {
                     console.log("**** Getting a valid question set");
                     const slotToElicit = 'questionSet';
                     const speechOutput = 'Please provide a valid questionSet.';
                     this.emit(':elicitSlot', slotToElicit, speechOutput, speechOutput);
-
                 } else {
+                    console.log("All slots filled, course number validated");
                     this.attributes.questionSet = slotObj.questionSet.value;
                     this.attributes.oldID = this.attributes.sessionID;
                     this.attributes.sessionID++;
 
-                    this.attributes.allQuestions = [];
-
-                    getSheet(key, getID(this.attributes.questionSet, ids)).then(sheet => {
-                        sheet.rows.forEach(row => {
-                            this.attributes.allQuestions.push({
-                                tag: row[0],
-                                question: row[1],
-                                answer: row[2],
-                                beenCalled: 0
-                            })
-                        });
-
-                        this.attributes.question = randomQuizQuestion(this.attributes.allQuestions);
-                        console.log("**** Question: " + this.attributes.question.question);
-                        this.response.speak(this.attributes.question.question).listen(this.attributes.question.question);
-                        this.attributes.question.beenCalled++;
-                        this.emit(":responseReady");
-                    });
+                    console.log("Getting a random question");
+                    this.attributes.question = randomQuizQuestion(this.attributes.obj[this.attributes.questionSet].Questions);
+                    console.log("**** Question: " + this.attributes.question.question);
+                    this.response.speak(this.attributes.question.question).listen(this.attributes.question.question);
+                    this.attributes.question.beenCalled++;
+                    this.emit(":responseReady");
                 }
 
             } else {
-
-                this.attributes.question = randomQuizQuestion(this.attributes.allQuestions);
+                this.attributes.question = randomQuizQuestion(this.attributes.obj[this.attributes.questionSet].Questions);
                 console.log("**** Question: " + this.attributes.question.question);
                 this.response.speak(this.attributes.question.question).listen(this.attributes.question.question);
                 this.attributes.question.beenCalled++;
                 this.emit(":responseReady");
             }
-        });
+        })
     },
 
     'AnswerIntent': function () {
@@ -437,6 +379,7 @@ const handlers = {
             this.emit(':responseReady');
 
         }
+
     },
 
     'AnotherQuestion' : function () {
