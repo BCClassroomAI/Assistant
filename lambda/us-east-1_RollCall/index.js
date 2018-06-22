@@ -152,6 +152,12 @@ function randomQuizQuestion(questionList) {
     }
 }
 
+function orderedQuizQuestion(questionList) {
+    let questionToAsk = questionList[0];
+    questionList.shift();
+    return questionToAsk;
+}
+
 function initializesessionID(attributes) {
     if (!attributes.sessionID) {
         attributes.sessionID = 0;
@@ -403,16 +409,23 @@ const handlers = {
 
             } else {
 
-                this.attributes.question = randomQuizQuestion(this.attributes.allQuestions);
+                const tag = '';
+
+                if (tag === 'random' || tag === 'yes') { // Excel could ask "in random order?" and teachers just enter yes or no
+                    this.attributes.question = randomQuizQuestion(this.attributes.allQuestions);
+                } else {
+                    this.attributes.question = orderedQuizQuestion(this.attributes.allQuestions);
+                }
+
                 console.log("**** Question: " + this.attributes.question.question);
-                this.response.speak(this.attributes.question.question).listen(this.attributes.question.question);
+                this.response.speak(this.attributes.question.question);
                 this.attributes.question.beenCalled++;
                 this.emit(":responseReady");
             }
         });
     },
 
-    'AnswerIntent': function () {
+    /* 'AnswerIntent': function () {
 
         const correctAnswer = this.attributes.question.answer;
 
@@ -441,7 +454,7 @@ const handlers = {
 
     'AnotherQuestion' : function () {
         this.emitWithState('QuizQuestion');
-    },
+    }, */
 
     'BonusPoints': function () {
         initializeCourses(this.attributes);
