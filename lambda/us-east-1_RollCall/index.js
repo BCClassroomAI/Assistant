@@ -29,15 +29,14 @@ const initializeCourses = (attributes) => {
     if (!attributes.hasOwnProperty('courses')) console.log('making a courses attribute');
         attributes.courses = {
     "1111": [
-        {name: "Tom", beenCalled: 0},
-        {name: "Jerry", beenCalled: 0},
-        {name: "Joe", beenCalled: 0}
-        ],
-    "2222": [
-        {name: "Jack", beenCalled: 0},
-        {name: "Daewoo", beenCalled: 0}
+        {name: "Ryan", beenCalled: 0},
+        {name: "Will", beenCalled: 0},
+        {name: "Andy", beenCalled: 0},
+        {name: "Daewoo", beenCalled: 0},
+        {name: "Jamie", beenCalled: 0},
+        {name: "Rebecca", beenCalled: 0},
+        {name: "Professor Wyner", beenCalled: 0}
         ]
-        }
 };
 
 // const initializeQuestions = (attributes) => {
