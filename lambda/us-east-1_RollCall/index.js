@@ -28,15 +28,16 @@ const initializeCourses = (attributes) => {
     console.log("We're in initializeCourses");
     if (!attributes.hasOwnProperty('courses')) console.log('making a courses attribute');
         attributes.courses = {
-    "1111": [
-        {name: "Ryan", beenCalled: 0},
-        {name: "Will", beenCalled: 0},
-        {name: "Andy", beenCalled: 0},
-        {name: "Daewoo", beenCalled: 0},
-        {name: "Jamie", beenCalled: 0},
-        {name: "Rebecca", beenCalled: 0},
-        {name: "Professor Wyner", beenCalled: 0}
-        ]
+            "1111": [
+                {name: "Ryan", beenCalled: 0},
+                {name: "Will", beenCalled: 0},
+                {name: "Andy", beenCalled: 0},
+                {name: "Daewoo", beenCalled: 0},
+                {name: "Jamie", beenCalled: 0},
+                {name: "Rebecca", beenCalled: 0},
+                {name: "Professor Wyner", beenCalled: 0}
+            ]
+        }
 };
 
 // const initializeQuestions = (attributes) => {
@@ -201,7 +202,7 @@ const handlers = {
         this.emit(':responseReady');
     },
 
-    'SessionEndedRequest' : function () {
+    'SessionEndedRequest': function () {
         console.log('***session ended***');
         this.attributes.oldID = this.attributes.sessionID;
         this.emit(':saveState', true);
@@ -336,21 +337,23 @@ const handlers = {
 
     'QuizQuestion': function () {
         function hasID(courseNumber, ids) {
-            for (let i=0; i<ids.length; i++) {
+            for (let i = 0; i < ids.length; i++) {
                 if (ids[i]["name"] == courseNumber) {
                     return true;
                 }
             }
             return false;
         }
+
         function getID(courseNumber, ids) {
-            for (let i=0; i<ids.length; i++) {
+            for (let i = 0; i < ids.length; i++) {
                 if (ids[i]["name"] == courseNumber) {
                     return ids[i]["id"];
                 }
             }
             return null;
         }
+
         console.log("**** Quiz Question Intent Started");
         initializesessionID(this.attributes);
         let ids = [];
@@ -449,12 +452,12 @@ const handlers = {
 
         } else if (!this.attributes.courses.hasOwnProperty(slotsObj.CourseNumber.value)) {
             let slotToElicit = 'CourseNumber';
-            let SpeechOutput = 'For which course number?';
+            let speechOutput = 'For which course number?';
             this.emit(':elicitSlot', slotToElicit, speechOutput, speechOutput);
 
         } else if (!search(getNames(this.attributes.courses[slotsObj.CourseNumber.value]), slotsObj.Student.value)) {
             let slotToElicit = 'Student';
-            let SpeechOutput = 'For which student?';
+            let speechOutput = 'For which student?';
             this.emit(':elicitSlot', slotToElicit, speechOutput, speechOutput);
 
         } else {
