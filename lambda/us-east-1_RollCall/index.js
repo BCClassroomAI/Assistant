@@ -10,20 +10,6 @@ const { urlToKey, getWorkbook, getSheet } = sheetsy;
 
 const key = '12B19KY3fNkgR4M_D56XQHNqCazr_oPoASI--0scdnZQ';
 
-// function init() {
-//     Tabletop.init( { key: publicSpreadsheetUrl,
-//                      callback: showInfo,
-//                      simpleSheet: true } )
-// }
-
-// function showInfo(data, tabletop) {
-//     console.log('Successfully processed!');
-//     console.log("DATA: " + data);
-//     //console.log("Element: " + data["1111"]["elements"][0]["Tag"]);
-//     //console.log("Passed Attributes: " + tabletop.passedAttributes);
-//     //console.log("***** TableTop Property: " + tabletop.wrf);
-// }
-
 const initializeCourses = (attributes) => {
     console.log("We're in initializeCourses");
     if (!attributes.hasOwnProperty('courses')) console.log('making a courses attribute');
@@ -40,71 +26,15 @@ const initializeCourses = (attributes) => {
         }
 };
 
-// const initializeQuestions = (attributes) => {
-//     console.log('Initializing Questions');
-//
-//     let ids = [];
-//
-//     getWorkbook(key).then(workbook => {
-//         ids = workbook["sheets"];
-//     };
-//
-//     return ids;
-//
-//     // let tabletop = Tabletop.init({
-//     //     key: publicSpreadsheetUrl,
-//     //     callback: showInfo
-//     // });
-//
-//     //console.log("Tabletop Sheets: " + tabletop.sheets());
-//     //console.log("Sheet 1111: " + tabletop.sheets("1111"));
-//
-//     // if (!attributes.hasOwnProperty('allQuestions')) {
-//     //     console.log('making an allQuestions attribute');
-//     //     getQuestions(attributes);
-//     // }
-// };
-
 AWS.config.update({region: 'us-east-1'});
 
 exports.handler = function (event, context, callback) {
     const alexa = Alexa.handler(event, context, callback);
-    //const s3bkt = event.Records[0].s3.bucket.bcalexaquizquestions;
-    //const s3key = event.Records[0].s3.object.quizquestions/SampleQuizQuestions.txt;
-    // alexa.dynamoDBTableName = 'RollCallAttributes';
-    // alexa.appId = config.appID;
-    // const params = {
-    //     Bucket: 'bcalexaquizquestions',
-    //     Key: '1111.txt'
-    // };
     alexa.dynamoDBTableName = "RollCall";
     alexa.registerHandlers(handlers);
     alexa.execute();
 
 };
-
-// async function S3read(params, callback) {
-//
-//
-//     let p = s3.getObject(params).promise();
-//     let res = await p;
-//     console.log(res.toString());
-//
-//     const lines = res.Body.toString().split('\r\n');
-//     const response = [];
-//
-//     for (let i=0; i < lines.length; i++) {
-//             const qparts = lines[i].split(':');
-//             response.push({
-//                 tag: qparts[0],
-//                 question: qparts[1],
-//                 answer: qparts[2],
-//                 beenCalled: 0
-//             });
-//     }
-//
-//     callback(null,response);
-// }
 
 function search(list, target) {
     if (list.length == 0) return false;
@@ -124,20 +54,6 @@ function getNames(students) {
     students.forEach(student => names.push(student.name));
     return names;
 }
-
-// function S3write(params, callback) {
-//     // call AWS S3
-//     const AWS = require('aws-sdk');
-//     const s3 = new AWS.S3();
-//
-//     s3.putObject(params, function(err, data) {
-//         if(err) { console.log(err, err.stack); }
-//         else {
-//             callback(data["ETag"]);
-//
-//         }
-//     });
-// }
 
 function randomQuizQuestion(questionList) {
     let randomIndex = Math.floor(Math.random() * questionList.length);
@@ -409,38 +325,7 @@ const handlers = {
             }
         });
     },
-
-    /* 'AnswerIntent': function () {
-
-        const correctAnswer = this.attributes.question.answer;
-
-        if (!this.event.request.intent.slots.testAnswers.value) {
-
-            let slotToElicit = 'testAnswers';
-            let speechOutput = this.attributes.question.question;
-            this.emit(':elicitSlot', slotToElicit, speechOutput, speechOutput);
-
-        } else {
-
-            const userAnswer = this.event.request.intent.slots.testAnswers.value;
-            let speechOutput;
-
-            if (userAnswer == correctAnswer) {
-                speechOutput = `Nice job! The correct answer is ${correctAnswer}.`;
-            } else {
-                speechOutput = `Sorry, the correct answer is ${correctAnswer}`;
-            }
-            speechOutput += '<break strength = "medium"/>' + ' Would you like another question?';
-            this.response.speak(speechOutput).listen('Would you like another question?');
-            this.emit(':responseReady');
-
-        }
-    },
-
-    'AnotherQuestion' : function () {
-        this.emitWithState('QuizQuestion');
-    }, */
-
+    
     'BonusPoints': function () {
         initializeCourses(this.attributes);
         let currentDialogState = this.event.request.dialogState;
