@@ -325,7 +325,7 @@ const handlers = {
             }
         });
     },
-    
+
     'BonusPoints': function () {
         initializeCourses(this.attributes);
         let currentDialogState = this.event.request.dialogState;
