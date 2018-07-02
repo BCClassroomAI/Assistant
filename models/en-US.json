@@ -1,7 +1,7 @@
 {
     "interactionModel": {
         "languageModel": {
-            "invocationName": "roll call",
+            "invocationName": "eagle expert",
             "intents": [
                 {
                     "name": "AMAZON.FallbackIntent",

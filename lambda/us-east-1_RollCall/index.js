@@ -12,7 +12,8 @@ const key = '12B19KY3fNkgR4M_D56XQHNqCazr_oPoASI--0scdnZQ';
 
 const initializeCourses = (attributes) => {
     console.log("We're in initializeCourses");
-    if (!attributes.hasOwnProperty('courses')) console.log('making a courses attribute');
+    if (!attributes.hasOwnProperty('courses')) {
+        console.log('making a courses attribute');
         attributes.courses = {
             "1111": [
                 {name: "Ryan", beenCalled: 0},
@@ -24,6 +25,26 @@ const initializeCourses = (attributes) => {
                 {name: "Professor Wyner", beenCalled: 0}
             ]
         }
+    }
+};
+
+const initializeQuestions = (attributes) => {
+    console.log("We're in initializeQuestions");
+    if (!attributes.hasOwnProperty('allQuestions')) {
+        console.log('making an allQuestions attribute');
+        attributes.allQuestions = {
+            "1111": [
+                {question: "This is sample question 1 from course 1111", beenCalled: 0},
+                {question: "This is sample question 2 from course 1111", beenCalled: 0},
+                {question: "This is sample question 3 from course 1111", beenCalled: 0}
+            ],
+            "2222": [
+                {question: "This is sample question 1 from course 2222", beenCalled: 0},
+                {question: "This is sample question 2 from course 2222", beenCalled: 0},
+                {question: "This is sample question 3 from course 2222", beenCalled: 0}
+            ]
+        }
+    }
 };
 
 AWS.config.update({region: 'us-east-1'});
@@ -40,13 +61,6 @@ function search(list, target) {
     if (list.length == 0) return false;
     if (list[0] == target) return true;
     return search(list.splice(1), target);
-}
-
-function indexOf(students, name) {
-    for (let i=0; i<students.length; i++) {
-        if (students[i].name === name) return i;
-    }
-    return NaN;
 }
 
 function getNames(students) {
@@ -69,8 +83,8 @@ function randomQuizQuestion(questionList) {
 }
 
 function orderedQuizQuestion(questionList) {
-    let questionToAsk = questionList[0];
-    questionList.shift();
+    let questionToAsk = questionList.shift();
+    questionList.push(questionToAsk);
     return questionToAsk;
 }
 
@@ -252,78 +266,29 @@ const handlers = {
     },
 
     'QuizQuestion': function () {
-        function hasID(courseNumber, ids) {
-            for (let i = 0; i < ids.length; i++) {
-                if (ids[i]["name"] == courseNumber) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        function getID(courseNumber, ids) {
-            for (let i = 0; i < ids.length; i++) {
-                if (ids[i]["name"] == courseNumber) {
-                    return ids[i]["id"];
-                }
-            }
-            return null;
-        }
-
         console.log("**** Quiz Question Intent Started");
-        initializesessionID(this.attributes);
-        let ids = [];
-        getWorkbook(key).then(workbook => {
-            ids = workbook["sheets"];
-            console.log("allQuestions at 345: " + this.attributes.allQuestions);
-            let slotObj = this.event.request.intent.slots;
-            let currentDialogState = this.event.request.dialogState;
-            console.log("**** Dialog State: " + currentDialogState);
-            if (idDoesMatch(this.attributes.oldID, this.attributes.sessionID)) {
-                if (currentDialogState !== 'COMPLETED') {
-                    this.emit(':delegate');
-                } else if (!hasID(slotObj.questionSet.value, ids)) {
-                    console.log("**** Getting a valid question set");
-                    const slotToElicit = 'questionSet';
-                    const speechOutput = 'Please provide a valid questionSet.';
-                    this.emit(':elicitSlot', slotToElicit, speechOutput, speechOutput);
-                } else {
-                    this.attributes.questionSet = slotObj.questionSet.value;
-                    this.attributes.oldID = this.attributes.sessionID;
-                    this.attributes.sessionID++;
-                    this.attributes.allQuestions = {questions: [], tag: ""};
-                    getSheet(key, getID(this.attributes.questionSet, ids)).then(sheet => {
-                        sheet.rows.forEach(row => {
-                            this.attributes.allQuestions.questions.push({
-                                tag: row[0],
-                                question: row[1],
-                                answer: row[2],
-                                beenCalled: 0
-                            });
-                            if (row[4] !== "") {
-                                this.attributes.allQuestions.tag = row[4];
-                            }
-                        });
-                        this.attributes.question = randomQuizQuestion(this.attributes.allQuestions.questions);
-                        console.log("**** Question: " + this.attributes.question.question);
-                        this.response.speak(this.attributes.question.question).listen(this.attributes.question.question);
-                        this.attributes.question.beenCalled++;
-                        this.emit(":responseReady");
-                    });
-                }
-            } else {
+        initializeQuestions(this.attributes);
+        let slotObj = this.event.request.intent.slots;
+        let currentDialogState = this.event.request.dialogState;
+	    console.log("**** Dialog State: " + currentDialogState);
 
-                if (this.attributes.allQuestions.tag === 'yes') {
-                    this.attributes.question = randomQuizQuestion(this.attributes.allQuestions.questions);
-                } else {
-                    this.attributes.question = orderedQuizQuestion(this.attributes.allQuestions.questions);
-                }
+	    if (currentDialogState !== 'COMPLETED') {
+                this.emit(':delegate');
+
+	    } else if (!this.attributes.allQuestions.hasOwnProperty(slotObj.questionSet.value)) {
+                console.log("**** Getting a valid question set");
+                const slotToElicit = 'questionSet';
+                const speechOutput = 'Please provide a valid questionSet.';
+                this.emit(':elicitSlot', slotToElicit, speechOutput, speechOutput);
+
+	    } else {
+	            this.attributes.questionSet = slotObj.questionSet.value;
+                this.attributes.question = orderedQuizQuestion(this.attributes.allQuestions[this.attributes.questionSet]);
                 console.log("**** Question: " + this.attributes.question.question);
                 this.response.speak(this.attributes.question.question);
                 this.attributes.question.beenCalled++;
                 this.emit(":responseReady");
-            }
-        });
+	    }
     },
 
     'BonusPoints': function () {
@@ -337,18 +302,18 @@ const handlers = {
 
         } else if (!this.attributes.courses.hasOwnProperty(slotsObj.CourseNumber.value)) {
             let slotToElicit = 'CourseNumber';
-            let speechOutput = 'For which course number?';
+            let speechOutput = "I'm sorry, I don't recognize that ";
             this.emit(':elicitSlot', slotToElicit, speechOutput, speechOutput);
 
-        } else if (!search(getNames(this.attributes.courses[slotsObj.CourseNumber.value]), slotsObj.Student.value)) {
+        } else if (false) {
             let slotToElicit = 'Student';
-            let speechOutput = 'For which student?';
+            let speechOutput = "I'm sorry, I don't recognize that student name. For which student should I add points?";
             this.emit(':elicitSlot', slotToElicit, speechOutput, speechOutput);
 
         } else {
             const courseNumber = slotsObj.CourseNumber.value;
             const student = slotsObj.Student.value;
-            const index = indexOf(this.attributes.courses[courseNumber], student);
+            const index = this.attributes.courses[courseNumber].indexOf(student);
 
             if (slotsObj.Points.value) {
                 this.attributes.courses[courseNumber][index].points += slotsObj.Points.value;
