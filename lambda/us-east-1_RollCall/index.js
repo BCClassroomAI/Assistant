@@ -350,6 +350,10 @@ const handlers = {
             const student = slotsObj.Student.value;
             const index = indexOf(this.attributes.courses[courseNumber], student);
 
+            // initialize points if needed
+            if (!this.attributes.courses[courseNumber][index].hasOwnProperty("points")) {
+                this.attributes.courses[courseNumber][index].points = 0;
+            }
             if (slotsObj.Points.value) {
                 this.attributes.courses[courseNumber][index].points += slotsObj.Points.value;
                 this.response.speak(slotsObj.Points.value.toString() + " points have been assigned to " + student);
