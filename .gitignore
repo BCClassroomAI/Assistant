@@ -5,3 +5,5 @@ config
 .ask
 RollCall.zip
 local-event.json
+node_modules
+.DS_Store
