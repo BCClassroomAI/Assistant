@@ -7,4 +7,4 @@ RollCall.zip
 local-event.json
 node_modules
 .DS_Store
-client-secret.json
+client_secret.json
