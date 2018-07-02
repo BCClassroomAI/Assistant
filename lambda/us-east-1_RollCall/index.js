@@ -305,7 +305,7 @@ const handlers = {
             let speechOutput = "I'm sorry, I don't recognize that ";
             this.emit(':elicitSlot', slotToElicit, speechOutput, speechOutput);
 
-        } else if (false) {
+        } else if (getNames(this.attributes.courses[slotsObj.CourseNumber.value]).indexOf(slotsObj.Student.value) == -1) {
             let slotToElicit = 'Student';
             let speechOutput = "I'm sorry, I don't recognize that student name. For which student should I add points?";
             this.emit(':elicitSlot', slotToElicit, speechOutput, speechOutput);
@@ -313,7 +313,7 @@ const handlers = {
         } else {
             const courseNumber = slotsObj.CourseNumber.value;
             const student = slotsObj.Student.value;
-            const index = this.attributes.courses[courseNumber].indexOf(student);
+            const index = getNames(this.attributes.courses[courseNumber]).indexOf(student);
 
             // initialize points if needed
             if (!this.attributes.courses[courseNumber][index].hasOwnProperty("points")) {
